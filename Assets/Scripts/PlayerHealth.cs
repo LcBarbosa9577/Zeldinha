@@ -39,6 +39,7 @@ public class PlayerHealth : MonoBehaviour
     public void TakeDamage(int damage)
     {
         currentHP -= damage;
+        anim.SetTrigger("Die");
 
         UpdateHPUI();
 
