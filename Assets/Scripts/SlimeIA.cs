@@ -24,9 +24,11 @@ public class SlimeIA : MonoBehaviour
     public float slimeRotationSpeed = 5f;
 
     [Header("Enemy Attack")]
-    public bool isAttackEnemy = false;
-    public float attackDelay = 2f;
-    private Coroutine attackCoroutine;
+    public bool isAttack = false;//Está atancando
+    public float attackDelay = 1.5f;//Tempo entre os ataques
+    private Coroutine attackCoroutine;//Instancia o ataque
+
+
     private void Start()
     {
         m_Animator = GetComponent<Animator>();
@@ -61,6 +63,19 @@ public class SlimeIA : MonoBehaviour
                 m_Animator.SetTrigger("GetHitTrigger");
                 ChangeState(enemyState.FURY);//Leva dano e fica furioso
             }
+        }
+    }
+
+    public void DealDamageToPlayer()
+    {
+        if (_gameManager.player == null) return;
+
+        PlayerHealth playerHealth =
+            _gameManager.player.GetComponent<PlayerHealth>();
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(10);
         }
     }
 
@@ -128,7 +143,7 @@ public class SlimeIA : MonoBehaviour
         EscolherNovoDestino();//Movimentar para um destino aleatório
 
 
-        while (agent.pathPending || agent.remainingDistance > agent.stoppingDistance)
+        while (agent.pathPending || agent.remainingDistance > agent.stoppingDistance) 
         {
             yield return null;
         }
@@ -141,7 +156,7 @@ public class SlimeIA : MonoBehaviour
 
     private void EscolherNovoDestino()
     {
-        if (_gameManager.slimeWayPoints == null || _gameManager.slimeWayPoints.Length == 0)
+        if(_gameManager.slimeWayPoints == null || _gameManager.slimeWayPoints.Length == 0)
         {
             ChangeState(enemyState.IDLE);
             return;
@@ -159,24 +174,22 @@ public class SlimeIA : MonoBehaviour
         agent.isStopped = false;
         agent.stoppingDistance = _gameManager.slimeDistanceAttack;
 
-
-
-        if (m_Animator != null)
+        if(m_Animator != null)
         {
             m_Animator.SetBool("isAlert", true);
             m_Animator.SetBool("isWalk", true);
         }
 
-        while (!isDead)
+        while(!isDead)
         {
-            if (_gameManager.player != null)
+            if(_gameManager.player != null)
             {
 
                 if (!isPlayerVisible)
                 {
                     loseTimer += 0.1f;
 
-                    if (loseTimer >= _gameManager.slimeLosePlayerTime)
+                    if(loseTimer >= _gameManager.slimeLosePlayerTime)
                     {
                         ChangeState(enemyState.PATROL);
                         yield break;
@@ -188,8 +201,8 @@ public class SlimeIA : MonoBehaviour
                 }
 
 
-                float distanceToPlayer =
-                    Vector3.Distance(transform.position, _gameManager.player.position);
+                    float distanceToPlayer =
+                        Vector3.Distance(transform.position, _gameManager.player.position);
 
                 if (distanceToPlayer > agent.stoppingDistance)
                 {
@@ -203,7 +216,8 @@ public class SlimeIA : MonoBehaviour
                     m_Animator.SetBool("isWalk", false);
                     agent.isStopped = true;
                     agent.ResetPath();
-                    //m_Animator.SetTrigger("AttackTrigger");
+                    
+                    Attack();//realiza o ataque quando estiver próximo o suficiente
                 }
             }
 
@@ -260,7 +274,7 @@ public class SlimeIA : MonoBehaviour
         {
             isPlayerVisible = true;
 
-            if (state == enemyState.IDLE || state == enemyState.PATROL)
+            if(state == enemyState.IDLE || state == enemyState.PATROL)
             {
                 ChangeState(enemyState.ALERT);
             }
@@ -275,8 +289,33 @@ public class SlimeIA : MonoBehaviour
         }
     }
 
+    public void EnemyAttack()//Disparado pelo evento de animação "Script de Animação do Attack2"
+    {
+        if(attackCoroutine != null)
+        {
+            StopCoroutine(attackCoroutine);
+        }
+
+        attackCoroutine = StartCoroutine(AttackCooldown());
+    }
+
+    public void Attack()
+    {
+        if (isAttack || isDead) return;
+
+        isAttack = true;
+        m_Animator.SetTrigger("AttackTrigger");
+    }
+
+    private IEnumerator AttackCooldown()
+    {
+        yield return new WaitForSeconds(attackDelay);
+        isAttack = false;
+    }
 
 
+   
 
+   
 
 }

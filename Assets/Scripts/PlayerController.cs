@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
     private Vector3 velocity;
     private Vector2 moveInput;
     private bool isRunning;
+    public bool isDead = false;
 
     private void Start()
     {
@@ -46,6 +47,8 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (isDead) return;
+
         MovimentacaoPlayer();
     }
 
@@ -71,6 +74,8 @@ public class PlayerController : MonoBehaviour
 
         isRunning = Keyboard.current.leftShiftKey.isPressed;
 
+        if (characterController == null || !characterController.enabled || !gameObject.activeInHierarchy)
+            return;
 
 
         if (isMoving)
@@ -92,6 +97,9 @@ public class PlayerController : MonoBehaviour
 
     private void AplicarGravidade()
     {
+        if (characterController == null || !characterController.enabled)
+            return;
+
         if (characterController.isGrounded && velocity.y < 0)
         {
             velocity.y = -2f; // Pequena força para manter o personagem no chão
@@ -136,6 +144,8 @@ public class PlayerController : MonoBehaviour
 
     private void AtaquePlayer()
     {
+        if (isAtacking || isDead) return;
+
         if (isAtacking) return; // Evita ataques consecutivos
         anim.SetTrigger("Attack");
          fxAtack.Emit(1); 
